@@ -1,0 +1,67 @@
+services:
+  test-container:
+    image: alpine:latest
+    command: sh -c "sleep 2 && echo TEST_VAR is $TEST_VAR && echo TEST_VAR2 is $TEST_VAR2 && tail -f /dev/null"
+    environment:
+      - TEST_VAR2=hello2
+  
+  test-container-2:
+    image: alpine:latest
+    command: sh -c "sleep 2 && echo TEST_VAR is $TEST_VAR && echo TEST_VAR2 is $TEST_VAR2 && tail -f /dev/null"
+    environment:
+      - TEST_VAR4=44444
+
+    
+  postgres:
+    image: postgres:16
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env.db
+    networks:
+      - strapi-network
+
+  strapi:
+    image: strapi/strapi:latest
+    command: tail -f /dev/null
+    environment:
+      - TEST_VAR2=hello2
+    volumes:
+      - ./strapi:/srv/app
+    ports:
+      - "1337:1337"
+    depends_on:
+      - postgres
+    env_file:
+      - .env.strapi
+      - .env.db
+    networks:
+      - strapi-network
+
+  nextjs:
+    build:
+      context: ./nextjs
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_STRAPI_API_URL=${NEXT_PUBLIC_STRAPI_API_URL}
+    depends_on:
+      - strapi
+    env_file:
+      - .env.nextjs
+    networks:
+      - strapi-network
+
+volumes:
+  postgres_data:
+
+networks:
+  strapi-network:
+    driver: bridge

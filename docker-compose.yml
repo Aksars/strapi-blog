@@ -1,0 +1,65 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: strapi_postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env.db    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - strapi-network
+
+  strapi:
+    image: strapi/strapi:latest
+    container_name: strapi_app
+    volumes:
+      - ./strapi:/srv/app
+    ports:
+      - "1337:1337"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env.strapi
+      - .env.db    
+    command: tail -f /dev/null
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:1337"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - strapi-network
+
+  nextjs:
+    build:
+      context: ./nextjs
+      dockerfile: Dockerfile
+    container_name: strapi_nextjs
+    ports:
+      - "3000:3000"
+    depends_on:
+      strapi:
+        condition: service_healthy
+    volumes:
+      - ./nextjs:/app
+      - /app/node_modules
+    env_file:
+      - .env.nextjs    
+    command: npm run dev
+    networks:
+      - strapi-network
+
+volumes:
+  postgres_data:
+
+networks:
+  strapi-network:
+    driver: bridge
