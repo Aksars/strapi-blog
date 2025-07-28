@@ -16,11 +16,12 @@ services:
     networks:
       - strapi-network
 
-  strapi:
-    image: strapi/strapi:latest
+  strapi:   
+    build: ./strapi  
     container_name: strapi_app
     volumes:
-      - ./strapi:/srv/app
+      - ./strapi:/srv/app       # Монтирует код
+      - /srv/app/node_modules   # Защищает node_modules
     ports:
       - "1337:1337"
     depends_on:
@@ -29,14 +30,15 @@ services:
     env_file:
       - .env.strapi
       - .env.db    
-    command: tail -f /dev/null
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:1337"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    # command: tail -f /dev/null
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:1337"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
     networks:
       - strapi-network
+      
 
   nextjs:
     build:
@@ -45,9 +47,9 @@ services:
     container_name: strapi_nextjs
     ports:
       - "3000:3000"
-    depends_on:
-      strapi:
-        condition: service_healthy
+    # depends_on:
+    #   strapi:
+    #     condition: service_healthy
     volumes:
       - ./nextjs:/app
       - /app/node_modules

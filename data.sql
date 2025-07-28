@@ -54,7 +54,7 @@ CREATE TABLE public._admin_permissions (
 );
 
 
-ALTER TABLE public._admin_permissions OWNER TO rebasedata;
+ALTER TABLE public._admin_permissions OWNER TO strapi;
 
 --
 -- Name: _admin_permissions_role_lnk; Type: TABLE; Schema: public; Owner: rebasedata
@@ -68,7 +68,7 @@ CREATE TABLE public._admin_permissions_role_lnk (
 );
 
 
-ALTER TABLE public._admin_permissions_role_lnk OWNER TO rebasedata;
+ALTER TABLE public._admin_permissions_role_lnk OWNER TO strapi;
 
 --
 -- Name: _admin_roles; Type: TABLE; Schema: public; Owner: rebasedata
@@ -89,7 +89,7 @@ CREATE TABLE public._admin_roles (
 );
 
 
-ALTER TABLE public._admin_roles OWNER TO rebasedata;
+ALTER TABLE public._admin_roles OWNER TO strapi;
 
 --
 -- Name: _admin_users; Type: TABLE; Schema: public; Owner: rebasedata
@@ -117,7 +117,7 @@ CREATE TABLE public._admin_users (
 );
 
 
-ALTER TABLE public._admin_users OWNER TO rebasedata;
+ALTER TABLE public._admin_users OWNER TO strapi;
 
 --
 -- Name: _admin_users_roles_lnk; Type: TABLE; Schema: public; Owner: rebasedata
@@ -132,7 +132,7 @@ CREATE TABLE public._admin_users_roles_lnk (
 );
 
 
-ALTER TABLE public._admin_users_roles_lnk OWNER TO rebasedata;
+ALTER TABLE public._admin_users_roles_lnk OWNER TO strapi;
 
 --
 -- Name: _categories; Type: TABLE; Schema: public; Owner: rebasedata
@@ -152,7 +152,7 @@ CREATE TABLE public._categories (
 );
 
 
-ALTER TABLE public._categories OWNER TO rebasedata;
+ALTER TABLE public._categories OWNER TO strapi;
 
 --
 -- Name: _comments; Type: TABLE; Schema: public; Owner: rebasedata
@@ -173,7 +173,7 @@ CREATE TABLE public._comments (
 );
 
 
-ALTER TABLE public._comments OWNER TO rebasedata;
+ALTER TABLE public._comments OWNER TO strapi;
 
 --
 -- Name: _comments_post_lnk; Type: TABLE; Schema: public; Owner: rebasedata
@@ -187,7 +187,7 @@ CREATE TABLE public._comments_post_lnk (
 );
 
 
-ALTER TABLE public._comments_post_lnk OWNER TO rebasedata;
+ALTER TABLE public._comments_post_lnk OWNER TO strapi;
 
 --
 -- Name: _files; Type: TABLE; Schema: public; Owner: rebasedata
@@ -220,7 +220,7 @@ CREATE TABLE public._files (
 );
 
 
-ALTER TABLE public._files OWNER TO rebasedata;
+ALTER TABLE public._files OWNER TO strapi;
 
 --
 -- Name: _files_folder_lnk; Type: TABLE; Schema: public; Owner: rebasedata
@@ -234,7 +234,7 @@ CREATE TABLE public._files_folder_lnk (
 );
 
 
-ALTER TABLE public._files_folder_lnk OWNER TO rebasedata;
+ALTER TABLE public._files_folder_lnk OWNER TO strapi;
 
 --
 -- Name: _files_related_mph; Type: TABLE; Schema: public; Owner: rebasedata
@@ -250,7 +250,7 @@ CREATE TABLE public._files_related_mph (
 );
 
 
-ALTER TABLE public._files_related_mph OWNER TO rebasedata;
+ALTER TABLE public._files_related_mph OWNER TO strapi;
 
 --
 -- Name: _i18n_locale; Type: TABLE; Schema: public; Owner: rebasedata
@@ -270,7 +270,7 @@ CREATE TABLE public._i18n_locale (
 );
 
 
-ALTER TABLE public._i18n_locale OWNER TO rebasedata;
+ALTER TABLE public._i18n_locale OWNER TO strapi;
 
 --
 -- Name: _posts; Type: TABLE; Schema: public; Owner: rebasedata
@@ -293,7 +293,7 @@ CREATE TABLE public._posts (
 );
 
 
-ALTER TABLE public._posts OWNER TO rebasedata;
+ALTER TABLE public._posts OWNER TO strapi;
 
 --
 -- Name: _posts_category_lnk; Type: TABLE; Schema: public; Owner: rebasedata
@@ -307,7 +307,7 @@ CREATE TABLE public._posts_category_lnk (
 );
 
 
-ALTER TABLE public._posts_category_lnk OWNER TO rebasedata;
+ALTER TABLE public._posts_category_lnk OWNER TO strapi;
 
 --
 -- Name: _sqlite_sequence; Type: TABLE; Schema: public; Owner: rebasedata
@@ -319,7 +319,7 @@ CREATE TABLE public._sqlite_sequence (
 );
 
 
-ALTER TABLE public._sqlite_sequence OWNER TO rebasedata;
+ALTER TABLE public._sqlite_sequence OWNER TO strapi;
 
 --
 -- Name: _strapi_api_token_permissions; Type: TABLE; Schema: public; Owner: rebasedata
@@ -338,7 +338,7 @@ CREATE TABLE public._strapi_api_token_permissions (
 );
 
 
-ALTER TABLE public._strapi_api_token_permissions OWNER TO rebasedata;
+ALTER TABLE public._strapi_api_token_permissions OWNER TO strapi;
 
 --
 -- Name: _strapi_api_token_permissions_token_lnk; Type: TABLE; Schema: public; Owner: rebasedata
@@ -352,7 +352,7 @@ CREATE TABLE public._strapi_api_token_permissions_token_lnk (
 );
 
 
-ALTER TABLE public._strapi_api_token_permissions_token_lnk OWNER TO rebasedata;
+ALTER TABLE public._strapi_api_token_permissions_token_lnk OWNER TO strapi;
 
 --
 -- Name: _strapi_api_tokens; Type: TABLE; Schema: public; Owner: rebasedata
@@ -378,7 +378,7 @@ CREATE TABLE public._strapi_api_tokens (
 );
 
 
-ALTER TABLE public._strapi_api_tokens OWNER TO rebasedata;
+ALTER TABLE public._strapi_api_tokens OWNER TO strapi;
 
 --
 -- Name: _strapi_core_store_settings; Type: TABLE; Schema: public; Owner: rebasedata
@@ -394,7 +394,7 @@ CREATE TABLE public._strapi_core_store_settings (
 );
 
 
-ALTER TABLE public._strapi_core_store_settings OWNER TO rebasedata;
+ALTER TABLE public._strapi_core_store_settings OWNER TO strapi;
 
 --
 -- Name: _strapi_database_schema; Type: TABLE; Schema: public; Owner: rebasedata
@@ -408,7 +408,7 @@ CREATE TABLE public._strapi_database_schema (
 );
 
 
-ALTER TABLE public._strapi_database_schema OWNER TO rebasedata;
+ALTER TABLE public._strapi_database_schema OWNER TO strapi;
 
 --
 -- Name: _strapi_history_versions; Type: TABLE; Schema: public; Owner: rebasedata
@@ -427,7 +427,7 @@ CREATE TABLE public._strapi_history_versions (
 );
 
 
-ALTER TABLE public._strapi_history_versions OWNER TO rebasedata;
+ALTER TABLE public._strapi_history_versions OWNER TO strapi;
 
 --
 -- Name: _strapi_migrations; Type: TABLE; Schema: public; Owner: rebasedata
@@ -440,7 +440,7 @@ CREATE TABLE public._strapi_migrations (
 );
 
 
-ALTER TABLE public._strapi_migrations OWNER TO rebasedata;
+ALTER TABLE public._strapi_migrations OWNER TO strapi;
 
 --
 -- Name: _strapi_migrations_internal; Type: TABLE; Schema: public; Owner: rebasedata
@@ -453,7 +453,7 @@ CREATE TABLE public._strapi_migrations_internal (
 );
 
 
-ALTER TABLE public._strapi_migrations_internal OWNER TO rebasedata;
+ALTER TABLE public._strapi_migrations_internal OWNER TO strapi;
 
 --
 -- Name: _strapi_release_actions; Type: TABLE; Schema: public; Owner: rebasedata
@@ -475,7 +475,7 @@ CREATE TABLE public._strapi_release_actions (
 );
 
 
-ALTER TABLE public._strapi_release_actions OWNER TO rebasedata;
+ALTER TABLE public._strapi_release_actions OWNER TO strapi;
 
 --
 -- Name: _strapi_release_actions_release_lnk; Type: TABLE; Schema: public; Owner: rebasedata
@@ -489,7 +489,7 @@ CREATE TABLE public._strapi_release_actions_release_lnk (
 );
 
 
-ALTER TABLE public._strapi_release_actions_release_lnk OWNER TO rebasedata;
+ALTER TABLE public._strapi_release_actions_release_lnk OWNER TO strapi;
 
 --
 -- Name: _strapi_releases; Type: TABLE; Schema: public; Owner: rebasedata
@@ -512,7 +512,7 @@ CREATE TABLE public._strapi_releases (
 );
 
 
-ALTER TABLE public._strapi_releases OWNER TO rebasedata;
+ALTER TABLE public._strapi_releases OWNER TO strapi;
 
 --
 -- Name: _strapi_transfer_token_permissions; Type: TABLE; Schema: public; Owner: rebasedata
@@ -531,7 +531,7 @@ CREATE TABLE public._strapi_transfer_token_permissions (
 );
 
 
-ALTER TABLE public._strapi_transfer_token_permissions OWNER TO rebasedata;
+ALTER TABLE public._strapi_transfer_token_permissions OWNER TO strapi;
 
 --
 -- Name: _strapi_transfer_token_permissions_token_lnk; Type: TABLE; Schema: public; Owner: rebasedata
@@ -545,7 +545,7 @@ CREATE TABLE public._strapi_transfer_token_permissions_token_lnk (
 );
 
 
-ALTER TABLE public._strapi_transfer_token_permissions_token_lnk OWNER TO rebasedata;
+ALTER TABLE public._strapi_transfer_token_permissions_token_lnk OWNER TO strapi;
 
 --
 -- Name: _strapi_transfer_tokens; Type: TABLE; Schema: public; Owner: rebasedata
@@ -569,7 +569,7 @@ CREATE TABLE public._strapi_transfer_tokens (
 );
 
 
-ALTER TABLE public._strapi_transfer_tokens OWNER TO rebasedata;
+ALTER TABLE public._strapi_transfer_tokens OWNER TO strapi;
 
 --
 -- Name: _strapi_webhooks; Type: TABLE; Schema: public; Owner: rebasedata
@@ -585,7 +585,7 @@ CREATE TABLE public._strapi_webhooks (
 );
 
 
-ALTER TABLE public._strapi_webhooks OWNER TO rebasedata;
+ALTER TABLE public._strapi_webhooks OWNER TO strapi;
 
 --
 -- Name: _strapi_workflows; Type: TABLE; Schema: public; Owner: rebasedata
@@ -605,7 +605,7 @@ CREATE TABLE public._strapi_workflows (
 );
 
 
-ALTER TABLE public._strapi_workflows OWNER TO rebasedata;
+ALTER TABLE public._strapi_workflows OWNER TO strapi;
 
 --
 -- Name: _strapi_workflows_stage_required_to_publish_lnk; Type: TABLE; Schema: public; Owner: rebasedata
@@ -618,7 +618,7 @@ CREATE TABLE public._strapi_workflows_stage_required_to_publish_lnk (
 );
 
 
-ALTER TABLE public._strapi_workflows_stage_required_to_publish_lnk OWNER TO rebasedata;
+ALTER TABLE public._strapi_workflows_stage_required_to_publish_lnk OWNER TO strapi;
 
 --
 -- Name: _strapi_workflows_stages; Type: TABLE; Schema: public; Owner: rebasedata
@@ -638,7 +638,7 @@ CREATE TABLE public._strapi_workflows_stages (
 );
 
 
-ALTER TABLE public._strapi_workflows_stages OWNER TO rebasedata;
+ALTER TABLE public._strapi_workflows_stages OWNER TO strapi;
 
 --
 -- Name: _strapi_workflows_stages_permissions_lnk; Type: TABLE; Schema: public; Owner: rebasedata
@@ -652,7 +652,7 @@ CREATE TABLE public._strapi_workflows_stages_permissions_lnk (
 );
 
 
-ALTER TABLE public._strapi_workflows_stages_permissions_lnk OWNER TO rebasedata;
+ALTER TABLE public._strapi_workflows_stages_permissions_lnk OWNER TO strapi;
 
 --
 -- Name: _strapi_workflows_stages_workflow_lnk; Type: TABLE; Schema: public; Owner: rebasedata
@@ -666,7 +666,7 @@ CREATE TABLE public._strapi_workflows_stages_workflow_lnk (
 );
 
 
-ALTER TABLE public._strapi_workflows_stages_workflow_lnk OWNER TO rebasedata;
+ALTER TABLE public._strapi_workflows_stages_workflow_lnk OWNER TO strapi;
 
 --
 -- Name: _up_permissions; Type: TABLE; Schema: public; Owner: rebasedata
@@ -685,7 +685,7 @@ CREATE TABLE public._up_permissions (
 );
 
 
-ALTER TABLE public._up_permissions OWNER TO rebasedata;
+ALTER TABLE public._up_permissions OWNER TO strapi;
 
 --
 -- Name: _up_permissions_role_lnk; Type: TABLE; Schema: public; Owner: rebasedata
@@ -699,7 +699,7 @@ CREATE TABLE public._up_permissions_role_lnk (
 );
 
 
-ALTER TABLE public._up_permissions_role_lnk OWNER TO rebasedata;
+ALTER TABLE public._up_permissions_role_lnk OWNER TO strapi;
 
 --
 -- Name: _up_roles; Type: TABLE; Schema: public; Owner: rebasedata
@@ -720,7 +720,7 @@ CREATE TABLE public._up_roles (
 );
 
 
-ALTER TABLE public._up_roles OWNER TO rebasedata;
+ALTER TABLE public._up_roles OWNER TO strapi;
 
 --
 -- Name: _up_users; Type: TABLE; Schema: public; Owner: rebasedata
@@ -746,7 +746,7 @@ CREATE TABLE public._up_users (
 );
 
 
-ALTER TABLE public._up_users OWNER TO rebasedata;
+ALTER TABLE public._up_users OWNER TO strapi;
 
 --
 -- Name: _up_users_role_lnk; Type: TABLE; Schema: public; Owner: rebasedata
@@ -760,7 +760,7 @@ CREATE TABLE public._up_users_role_lnk (
 );
 
 
-ALTER TABLE public._up_users_role_lnk OWNER TO rebasedata;
+ALTER TABLE public._up_users_role_lnk OWNER TO strapi;
 
 --
 -- Name: _upload_folders; Type: TABLE; Schema: public; Owner: rebasedata
@@ -781,7 +781,7 @@ CREATE TABLE public._upload_folders (
 );
 
 
-ALTER TABLE public._upload_folders OWNER TO rebasedata;
+ALTER TABLE public._upload_folders OWNER TO strapi;
 
 --
 -- Name: _upload_folders_parent_lnk; Type: TABLE; Schema: public; Owner: rebasedata
@@ -795,7 +795,7 @@ CREATE TABLE public._upload_folders_parent_lnk (
 );
 
 
-ALTER TABLE public._upload_folders_parent_lnk OWNER TO rebasedata;
+ALTER TABLE public._upload_folders_parent_lnk OWNER TO strapi;
 
 --
 -- Data for Name: _admin_permissions; Type: TABLE DATA; Schema: public; Owner: rebasedata
