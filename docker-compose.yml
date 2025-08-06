@@ -20,8 +20,8 @@ services:
     build: ./strapi  
     container_name: strapi_app
     volumes:
-      - ./strapi:/srv/app       # Монтирует код
-      - /srv/app/node_modules   # Защищает node_modules
+      - ./strapi:/app       # Монтирует код
+      - /app/node_modules   # Защищает node_modules
     ports:
       - "1337:1337"
     depends_on:
@@ -30,12 +30,16 @@ services:
     env_file:
       - .env.strapi
       - .env.db    
+    command: npm run develop
     # command: tail -f /dev/null
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost:1337"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3
+    # обдумать первую прогрузку админки http://localhost/admin/
+    # возможно будет быстрее грузиться 
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:1337"]
+      interval: 30s
+      start_period: 20s
+      timeout: 15s
+      retries: 3
     networks:
       - strapi-network
       
@@ -47,9 +51,9 @@ services:
     container_name: strapi_nextjs
     ports:
       - "3000:3000"
-    # depends_on:
-    #   strapi:
-    #     condition: service_healthy
+    depends_on:
+      strapi:
+        condition: service_healthy
     volumes:
       - ./nextjs:/app
       - /app/node_modules
