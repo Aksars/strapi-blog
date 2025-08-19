@@ -31,8 +31,8 @@ strapi-blog/
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
-   cd strapi-blog-main
+   git clone https://github.com/Aksars/strapi-blog.git
+   cd strapi-blog
    ```
 
 2. **Set up environment variables**  
