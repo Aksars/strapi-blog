@@ -25,7 +25,7 @@ strapi-blog/
 - Docker and Docker Compose
 - Node.js 18+ (for local development)
 - npm 6+
-- openssl (for first setup)
+- openssl (for recommended first setup)
 
 ## ⚡ Quick Start
 
@@ -35,12 +35,12 @@ strapi-blog/
    cd strapi-blog-main
    ```
 
-2. **Set up environment variables**
-  use setup.sh script to generate pass for DB and all strapi keys using openssl rand -base64 32 (recomended) 
-   **Just run**
+2. **Set up environment variables**  
+  **Use setup.sh** script to generate pass for DB and all strapi keys using openssl rand -base64 32 **(recommended)**  
+   **Run**
    ```bash
    ./setup.sh
-   ```
+   ```  
    You can generete password for db and keys on your own from examples doing something like this instaed of setup.sh
    ```bash
    rename .example.env.* files to .env.*
@@ -51,31 +51,29 @@ strapi-blog/
    #generate keys by yourself in .env.strapi
    ```   
 
-3. **Start the application**
+3. **Start the application**  
    Run docker-compose to get things running (near 60s)
    ```bash
    docker-compose up -d
    ```
    if you are using vs code you can install dependencies in ./next.js with npm install just to get rid of linter warnings (it works well without it)
 
-4. **Access the applications**
+4. **Access the applications**  
    if you access from same machine use
    - Frontend: http://localhost:3000
    - Strapi Admin: http://localhost:1337/admin
-   - Database: localhost:5432
+   - Database: localhost:5432  
    or if you develop on some VPS insert its IP like 
-   - Frontend: http://111.222.222.222:3000 to access your project 
-   - ... 
+   - Frontend: http://111.222.222.222:3000 to access your project    
 
-   First run of strapi admin page takes near 15s on my VPS so be paitent
+   **First run of strapi admin page takes near 15s on my VPS so be paitent**
 
-5. **Development**
-   You can change files in ./nextjs to edit frontend.
-   Try to write something in 
-   /nextjs/src/app/page.tsx
-   to see the changes instatnly on http://localhost:3000. 
-   Docker volume and next will handle it
-   Same gouse for Strapi. 
+5. **Development**  
+   You can change files in ./nextjs to edit frontend.  
+   Try to write something in  
+   **/nextjs/src/app/page.tsx**
+   to see the changes instatnly on http://localhost:3000.  
+   Docker volume and next will handle it. Same gouse for Strapi.  
    If you need to restart project use 
     ```bash
    docker-compose down
