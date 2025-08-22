@@ -10,14 +10,17 @@ generate_password() {
     openssl rand -base64 12 | tr -d '/+=' | cut -c1-16
 }
 
+# Генерируем ОДИН пароль для базы данных
+DB_PASSWORD=$(generate_password)
+
 # 1. Обрабатываем .env.db
 echo "Создание .env.db..."
 cat > .env.db << EOF
 POSTGRES_USER=strapi
-POSTGRES_PASSWORD=$(generate_password)
+POSTGRES_PASSWORD=$DB_PASSWORD
 POSTGRES_DB=strapi_db
 DATABASE_USERNAME=strapi
-DATABASE_PASSWORD=$(generate_password)
+DATABASE_PASSWORD=$DB_PASSWORD
 DATABASE_NAME=strapi_db
 DATABASE_SSL=false
 EOF
