@@ -24,7 +24,9 @@ export interface Post {
   updatedAt: string;
   publishedAt?: string;
   likes?: number | null;
+  image?:any
   publish_date?: string;
+  category:any
 }
 
 // 3. ТИПИЗИРОВАННЫЕ ОТВЕТЫ API

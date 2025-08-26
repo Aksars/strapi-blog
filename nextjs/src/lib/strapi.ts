@@ -1,10 +1,10 @@
 import { Post, PostsResponse } from '@/types/strapi';
 
-const STRAPI_API_URL = process.env.STRAPI_API_URL || 'http://strapi:1337';
+const STRAPI_API_URL = process.env.STRAPI_API_URL  || 'http://strapi:1337';
 
 export async function getPosts(): Promise<Post[]> {
   try {
-    const response = await fetch(`${STRAPI_API_URL}/api/posts`);
+    const response = await fetch(`${STRAPI_API_URL}/api/posts?populate[image]=true&populate[category]=true`);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     
     const postsData: PostsResponse = await response.json();
@@ -18,8 +18,9 @@ export async function getPosts(): Promise<Post[]> {
 export async function getPostBySlug(slug: string): Promise<Post | null> {
   try {
     const response = await fetch(
-      `${STRAPI_API_URL}/api/posts?filters[slug][$eq]=${slug}`
+      `${STRAPI_API_URL}/api/posts?populate[image]=true&populate[category]=true&filters[slug][$eq]=${slug}`
     );
+    console.log(`${STRAPI_API_URL}/api/posts?populate[image]=true&populate[category]=true&filters[slug][$eq]=${slug}`)
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     
     const postsData: PostsResponse = await response.json();

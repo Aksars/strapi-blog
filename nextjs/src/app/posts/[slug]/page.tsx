@@ -1,4 +1,4 @@
-import { getPostBySlug, getPosts } from '@/lib/strapi';
+import { getPostBySlug } from '@/lib/strapi';
 import { notFound } from 'next/navigation';
 import SimpleContent from '@/components/SimpleContent'; // Импортируем наш компонент
 

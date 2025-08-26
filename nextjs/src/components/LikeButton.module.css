@@ -1,0 +1,11 @@
+.likeBtn {
+	border-radius: 0.2em;
+  min-width: 3.85em;
+  padding: 0.35em 0.7em;
+  display: flex;
+  gap: 0.5em;
+}
+.likesCounter {
+	min-width: 0.75em;
+	text-align: center;
+}

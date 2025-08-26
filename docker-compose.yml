@@ -31,7 +31,7 @@ services:
     env_file:
       - .env.strapi
       - .env.db    
-    command: npm run develop
+    command: npx pm2-runtime start npm --name strapi -- run develop
     # command: tail -f /dev/null
     # обдумать первую прогрузку админки http://localhost/admin/
     # возможно будет быстрее грузиться 

@@ -47,6 +47,9 @@
       "relation": "oneToMany",
       "target": "api::comment.comment",
       "mappedBy": "post"
+    },
+    "test_field": {
+      "type": "string"
     }
   }
 }
