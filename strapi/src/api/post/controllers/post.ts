@@ -10,23 +10,19 @@ export default factories.createCoreController('api::post.post', ({ strapi }) => 
     const { id } = ctx.params;
 
     try {
-      // Читаем текущее значение лайков
-      const post = await strapi.db.query('api::post.post').findOne({
-        where: { documentId: id },
-        select: ['likes'],
-      });      
+   
+      // Атомарный инкремент через knex
+      const result = await strapi.db.connection('posts')
+        .where({ document_id: id })
+        .increment('likes', 1)
+        .returning('likes');
 
-      if (!post) {
-        return ctx.notFound('Post not foundввв');
-      }
+      // В Postgres result = [{ likes: newValue }]
+      const likes = Array.isArray(result) ? result[0].likes : null;
 
-      // Обновляем лайки
-      const updatedPost = await strapi.db.query('api::post.post').update({
-        where: { documentId: id },
-        data: { likes: (post.likes || 0) + 1 },
-      });
-
-      return { likes: updatedPost.likes };
+      return {        
+        likes: likes
+       };
     } catch (error) {
       return ctx.badRequest('Like failed', {
         postId: id,
@@ -36,27 +32,25 @@ export default factories.createCoreController('api::post.post', ({ strapi }) => 
   },
 
   async unlike(ctx) {
+    const { id } = ctx.params;
+
     try {
-      const { id } = ctx.params;
-      
-      const post = await strapi.service('api::post.post').findOne(id, {
-        fields: ['likes']
-      });
+   
+      // Атомарный инкремент через knex
+      const result = await strapi.db.connection('posts')
+        .where({ document_id: id })
+        .decrement('likes', 1)
+        .returning('likes');
 
-      if (!post) {
-        return ctx.notFound('Post not found');
-      }
+      // В Postgres result = [{ likes: newValue }]
+      const likes = Array.isArray(result) ? result[0].likes : null;
 
-      const updatedPost = await strapi.service('api::post.post').update(id, {
-        data: {
-          likes: Math.max(0, (post.likes || 0) - 1)
-        },
-        fields: ['likes']
-      });
-
-      return { likes: updatedPost.likes };
+      return { likes: likes };
     } catch (error) {
-      ctx.badRequest('Unlike failed', { error });
+      return ctx.badRequest('Like failed', {
+        postId: id,
+        errorMessage: error.message,
+      });
     }
   }
 }));

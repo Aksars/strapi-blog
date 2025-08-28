@@ -5,7 +5,7 @@ import PostsList from '../components/PostsList'
 export default function Home() {
   return (
 
-    <div className={styles.page}>
+    <div className={`${styles.page} ` }>
       Главная страница
      <PostsList limit={2}  />
       

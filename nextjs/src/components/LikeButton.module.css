@@ -4,6 +4,7 @@
   padding: 0.35em 0.7em;
   display: flex;
   gap: 0.5em;
+  border:0;
 }
 .likesCounter {
 	min-width: 0.75em;
