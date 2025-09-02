@@ -1,21 +1,39 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
+type RouteContext = {
+  params: Promise<{
+    documentId: string;
+  }>;
+};
 export async function POST(
-  req: Request,
-  { params }: { params: { documentId: string } }
+  request: NextRequest,
+  context: RouteContext
 ) {
-  const strapiUrl = `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/posts/${params.documentId}/unlike`;
-
   try {
+    const { documentId } = await context.params;
+
+    if (!documentId) {
+      return NextResponse.json(
+        { error: "Document ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const strapiUrl = `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/posts/${documentId}/unlike`;
+    //console.log("strapiURL = ", strapiUrl)
     const res = await fetch(strapiUrl, {
       method: "POST",
+      // cache:"no-store",
       headers: {
         "Content-Type": "application/json",
       },
-      body: await req.text(),
+      body: await request.text(),
     });
 
     const data = await res.json();
+    console.log("АнЛайкнул")
+    console.log("Сейчас лайков =", data.likes)
+    
     return NextResponse.json(data, { status: res.status });
   } catch (err) {
     console.error("Proxy error:", err);

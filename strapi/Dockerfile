@@ -12,7 +12,12 @@ COPY package.json ./
 
 # Устанавливаем зависимости с флагами для Strapi
 RUN npm install --legacy-peer-deps --force
+RUN npm install pm2-runtime 
 
 # Не стоит так делать, лучше в докер компоузе команды писать иначе пересобирать прийдется
 # CMD ["npm", "run", "develop"]
 # CMD ["tail", "-f", "/dev/null"]   
+
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

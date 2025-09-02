@@ -17,17 +17,18 @@ export default async function PostsList({
   limit,
   showDate = true,
   sortBy = 'newest',
-  category,
+ // category,
   className = "",
   showExcerpt = false,
   excerptLength = 150
 }: PostsListProps) {
-  let posts = await getPosts();
+  const posts = await getPosts();
+  console.log("получены посты = ", posts)
   
-  // Фильтрация по категории
-  if (category) {
-    posts = posts.filter(post => post.category?.slug === category);
-  }
+  // // Фильтрация по категории
+  // if (category) {
+  //   posts = posts.filter(post => post.category?.slug === category);
+  // }
   
   // Сортировка
   posts.sort((a, b) => {
@@ -57,7 +58,7 @@ export default async function PostsList({
             <Link 
               href={`/posts/${post.slug}`}
               className="block hover:bg-gray-50 p-4 rounded-lg transition-colors"
-            >
+            > 
               <h2 className="text-xl font-semibold text-gray-900 hover:text-blue-600 mb-2">
                 {post.title}
               </h2>
@@ -78,6 +79,7 @@ export default async function PostsList({
           </li>
         ))}
       </ul>
+      <>{ console.log("КОНЕЦ ПОСТОВ ВРЕМЯ, ", new Date())}</>
     </div>
   );
 }

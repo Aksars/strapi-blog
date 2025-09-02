@@ -1,6 +1,14 @@
-import Image from "next/image";
+// import Image from "next/image";
 import styles from "./page.module.css";
 import PostsList from '../components/PostsList'
+
+export const revalidate = 0; // Отключает кэширование
+export const dynamic = 'force-dynamic'; // Динамическая маршрутизация
+export async function generateMetadata() {
+  return {
+    cache: 'no-store', // Отключает кэш браузера
+  };
+}
 
 export default function Home() {
   return (

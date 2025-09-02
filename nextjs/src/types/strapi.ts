@@ -24,9 +24,9 @@ export interface Post {
   updatedAt: string;
   publishedAt?: string;
   likes?: number | null;
-  image?:any
+  image?:unknown
   publish_date?: string;
-  category:any
+  category:unknown
 }
 
 // 3. ТИПИЗИРОВАННЫЕ ОТВЕТЫ API
@@ -41,7 +41,7 @@ export type PostResponse = StrapiResponse<Post>;
 // ----------------------------
 export interface PostsParams {
   populate?: string;
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
   sort?: string[];
   pagination?: {
     page?: number;

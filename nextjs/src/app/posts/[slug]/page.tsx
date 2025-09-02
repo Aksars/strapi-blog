@@ -8,14 +8,21 @@ import SimpleContent from '@/components/SimpleContent'; // Импортируе�
 //     slug: post.slug, // БЕЗ attributes!
 //   }));
 // }
-
+export const revalidate = 0; // Отключает кэширование
+export const dynamic = 'force-dynamic'; // Динамическая маршрутизация
+export async function generateMetadata() {
+    return {
+        cache: 'no-store', // Отключает кэш браузера
+    };
+}
 
 export default async function PostPage({ params }: {
     params: Promise<{ slug: string }>
 }) {
     const { slug } = await params;
     const post = await getPostBySlug(slug);
-
+    console.log('Загружен пост:', post?.title);
+    console.log('Лайков у поста:', post?.likes);
     if (!post) {
         notFound();
     }

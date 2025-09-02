@@ -22,7 +22,7 @@ services:
     container_name: strapi_app
     volumes:
       - ./strapi:/app       # Монтирует код
-      - /app/node_modules   # Защищает node_modules
+      - strapi_node_modules:/app/node_modules  # Защищает node_modules
     ports:
       - "1337:1337"
     depends_on:
@@ -31,15 +31,11 @@ services:
     env_file:
       - .env.strapi
       - .env.db    
-    command: npx pm2-runtime start npm --name strapi -- run develop
-    # command: tail -f /dev/null
-    # обдумать первую прогрузку админки http://localhost/admin/
-    # возможно будет быстрее грузиться 
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:1337"]
+      test: curl -f http://localhost:1337/admin/ || exit 1
       interval: 30s
       start_period: 20s
-      timeout: 15s
+      timeout: 20s
       retries: 3
     networks:
      - strapi-network
@@ -57,15 +53,18 @@ services:
       condition: service_healthy
     volumes:
       - ./nextjs:/app
-      - /app/node_modules
+      - nextjs_node_modules:/app/node_modules
     env_file:
-      - .env.nextjs    
-    command: npm run dev
+      - .env.nextjs  
+    # command: tail -f /dev/null  
+    # command: npm run dev
     networks:
       - strapi-network
 
 volumes:
   postgres_data:
+  strapi_node_modules:
+  nextjs_node_modules:
 
 networks:
   strapi-network:
