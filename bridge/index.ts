@@ -1,48 +1,31 @@
-import { Bot } from "grammy";
-import { Client } from "pg";
-import OpenAI from "openai";
-import "dotenv/config";
+import 'dotenv/config';
+import { Bot } from 'grammy';
 
-// --- Telegram Bot ---
-const bot = new Bot(process.env.BOT_TOKEN!);
+// --- Проверка токена ---
+const token = process.env.BOT_TOKEN;
+if (!token) {
+  console.error("❌ BOT_TOKEN не задан в .env");
+  process.exit(1);
+}
 
-// --- Postgres ---
-const db = new Client({
-  host: process.env.DB_HOST,
-  port: Number(process.env.DB_PORT),
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-});
-db.connect();
+// --- Инициализация бота ---
+const bot = new Bot(token);
 
-// --- OpenAI ---
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// --- Рандомные ответы ---
+const replies = [
+  "Привет! 👋",
+  "Как дела?",
+  "Хороший день сегодня!",
+  "🤖 Я твой бот",
+  "Не могу ответить на это 😅"
+];
 
-// --- Bot logic ---
-bot.command("start", (ctx) =>
-  ctx.reply("Привет! Я бот 🤖. Задай вопрос, и я спрошу у ChatGPT.")
-);
-
-bot.on("message:text", async (ctx) => {
-  const userMsg = ctx.message.text;
-
-  // Сохраним запрос в базу
-  await db.query("INSERT INTO messages (user_id, text) VALUES ($1, $2)", [
-    ctx.from.id,
-    userMsg,
-  ]);
-
-  // Отправим запрос в ChatGPT
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [{ role: "user", content: userMsg }],
-  });
-
-  const reply = completion.choices[0]?.message?.content ?? "🤔";
-  await ctx.reply(reply);
+// --- Обработка любого текста ---
+bot.on('message:text', (ctx) => {
+  const randomReply = replies[Math.floor(Math.random() * replies.length)];
+  ctx.reply(randomReply).catch(console.error);
 });
 
+// --- Старт бота ---
 bot.start();
+console.log("🤖 Бот запущен и слушает сообщения!");
