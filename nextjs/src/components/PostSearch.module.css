@@ -1,0 +1,15 @@
+.search{
+ display: flex;
+	flex-direction: column;
+	gap: 0.3em;
+	align-items: center;
+}
+.searchInput{
+    background-color: gray;
+}
+.searchResults{
+    min-height: 300px;
+    min-width: 400px;
+    color: black;
+    background-color: antiquewhite;
+}

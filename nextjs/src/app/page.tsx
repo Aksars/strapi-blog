@@ -1,6 +1,7 @@
 // import Image from "next/image";
 import styles from "./page.module.css";
 import PostsList from '../components/PostsList'
+import PostSearch from '../components/PostSearch'
 
 export const revalidate = 0; // Отключает кэширование
 export const dynamic = 'force-dynamic'; // Динамическая маршрутизация
@@ -13,10 +14,12 @@ export async function generateMetadata() {
 export default function Home() {
   return (
 
-    <div className={`${styles.page} ` }>
+    <div className={`${styles.page} `}>
       Главная страница
-     <PostsList limit={2}  />
-      
+
+      <PostSearch />
+      <PostsList limit={2} />
+
     </div>
   );
 }

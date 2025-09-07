@@ -75,7 +75,7 @@ export default async function PostsList({
                 </p>
               )}
             </Link>
-            <LikeButton documentId={post.documentId} initialLikes={post.likes || 0}/>           
+            <LikeButton documentId={post.documentId} initialLikes={post.likes || 0} />           
           </li>
         ))}
       </ul>

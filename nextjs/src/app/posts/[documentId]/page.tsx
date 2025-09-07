@@ -1,4 +1,4 @@
-import { getPostBySlug } from '@/lib/strapi';
+import { getPostByDocId as getPostByDocId } from '@/lib/strapi';
 import { notFound } from 'next/navigation';
 import SimpleContent from '@/components/SimpleContent'; // Импортируем наш компонент
 
@@ -17,10 +17,12 @@ export async function generateMetadata() {
 }
 
 export default async function PostPage({ params }: {
-    params: Promise<{ slug: string }>
+    params: Promise<{ documentId: string }>
 }) {
-    const { slug } = await params;
-    const post = await getPostBySlug(slug);
+   
+    const { documentId } = await params;
+     console.log("Страница получения поста по docID = ",documentId)
+    const post = await getPostByDocId(documentId);
     console.log('Загружен пост:', post?.title);
     console.log('Лайков у поста:', post?.likes);
     if (!post) {

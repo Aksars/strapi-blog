@@ -18,9 +18,9 @@ export async function POST(
         { status: 400 }
       );
     }
-    //console.log("Процес энв = ", process.env)
+    console.log("Процес энв = ", process.env)
     const strapiUrl = `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/api/posts/${documentId}/like`;
-    //console.log("strapiURL = ", strapiUrl)
+    console.log("strapiURL = ", strapiUrl)
    
     const res = await fetch(strapiUrl, {
       method: "POST",
