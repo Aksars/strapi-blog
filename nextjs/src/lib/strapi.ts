@@ -26,15 +26,15 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 export async function getPosts() {
   const res = await fetch(`${API_BASE_URL}/api/posts/`, { cache: 'no-store' });
 
-  if (!res.ok) 
+  if (!res.ok)
     throw new Error(`HTTP error! status: ${res.status}`);
-  
+
   const data = await res.json();
   return data.data || [];
 }
 
 export async function getPostByDocId(docId: string) {
-  console.log(`Пробую получить 1 пост по некст-апи ${API_BASE_URL}/api/posts/${docId}` )
+  console.log(`Пробую получить 1 пост по некст-апи ${API_BASE_URL}/api/posts/${docId}`)
   const res = await fetch(`${API_BASE_URL}/api/posts/${docId}/`, { cache: 'no-store' });
   console.log("результат получения 1 поста", res.status)
   if (!res.ok)
