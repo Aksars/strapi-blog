@@ -69,20 +69,37 @@ services:
       - bridge_node_modules:/app/node_modules
     depends_on:
       - postgres
+      - redis 
     env_file:
       - .env.bot+ai
       - .env.db
     networks:
       - strapi-network
-
-
-
+    environment:
+      - REDIS_URL=redis://redis:6379
+  
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --save 60 1 --loglevel warning
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - strapi-network
 
 volumes:
   postgres_data:
   strapi_node_modules:
   nextjs_node_modules:
   bridge_node_modules:
+  redis_data:
 
 networks:
   strapi-network:
