@@ -6,29 +6,34 @@ import {
   setupMessageHandlers, setupMiddlewareHandlers
 } from './handlers/index.js';
 
-// получаем и проверяем токены к боту и chatgpt
-const { token, apiToken } = getTokens()
+async function main() {
+  try {
+    const { token, apiToken } = getTokens();
 
-// Инициализируем редис хранилище, openAIClient, и телеграм бота
-const openAIClient = initOpenAI(apiToken)
-const storage = await initRedisStorage()
-const bot = createBot(storage, token)
-bot.start();
-logger.info(" 🤖 Бот запущен и слушает сообщения!")
+    // Инициализируем основные зависимости
+    const openAIClient = initOpenAI(apiToken);
+    const storage = await initRedisStorage();
+    const bot = createBot(storage, token);
 
-// Инициализируем классы для работы с страпи, отправки, и генерации изображений
-const strapiService = new StrapiService()
-const imageGenerationService = new ImageGenerationService(openAIClient);
-const imageDeliveryService = new ImageDeliveryService(strapiService);
+    // Инициализируем сервисы
+    const strapiService = new StrapiService();
+    const imageGenerationService = new ImageGenerationService(openAIClient);
+    const imageDeliveryService = new ImageDeliveryService(strapiService);
 
-setupCallbackHandlers(bot, imageDeliveryService)
-setupCommandHandlers(bot, imageDeliveryService)
-setupMessageHandlers(bot, imageDeliveryService, imageGenerationService)
-setupMiddlewareHandlers(bot)
+    // Настраиваем обработчики
+    setupCallbackHandlers(bot, imageDeliveryService, imageGenerationService);
+    setupCommandHandlers(bot, imageDeliveryService, imageGenerationService);
+    setupMessageHandlers(bot, imageDeliveryService, imageGenerationService);
+    setupMiddlewareHandlers(bot);
 
+    // Запускаем бота
+    bot.start();
+    logger.info(" 🤖 Бот запущен и слушает сообщения!");
 
+  } catch (error) {
+    logger.error("❌ Критическая ошибка при запуске бота:", error);
+    process.exit(1);
+  }
+}
 
-
-
-
-
+main();

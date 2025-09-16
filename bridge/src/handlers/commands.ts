@@ -5,8 +5,9 @@ import FileImageService from '../service/fileImageService.js';
 import ImageDeliveryService from '../service/imageDeliveryService.js';
 import { logger } from '../utils/logger.js';
 import { DateUtils } from '../utils/dateUtils.js';
+import ImageGenerationService from '../service/imageGenerationService.js';
 
-export function setupCommandHandlers(bot: Bot<MyContext>, imageDeliveryService: ImageDeliveryService) {
+export function setupCommandHandlers(bot: Bot<MyContext>, imageDeliveryService: ImageDeliveryService, imageGenerationService:ImageGenerationService) {
 
     // Команда меню
     bot.command(["menu", "start"], async (ctx) => {

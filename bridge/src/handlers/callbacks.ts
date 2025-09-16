@@ -4,8 +4,9 @@ import { showAIMenu, switchMainMenu, showSaveMenu } from '../keyboards/index.js'
 import FileImageService from '../service/fileImageService.js';
 import ImageDeliveryService from '../service/imageDeliveryService.js';
 import { logger } from '../utils/logger.js';
+import ImageGenerationService from '../service/imageGenerationService.js';
 
-export function setupCallbackHandlers(bot: Bot<MyContext>, imageDeliveryService: ImageDeliveryService) {
+export function setupCallbackHandlers(bot: Bot<MyContext>, imageDeliveryService: ImageDeliveryService, imageGenerationService:ImageGenerationService) {
     
     handleCallback("whereGetResultMenu", async (ctx) => {
         await showAIMenu(ctx)
