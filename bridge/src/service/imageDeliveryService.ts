@@ -4,14 +4,14 @@ import type { Image } from './imageGenerationService.js';
 import StrapiService from './strapiService.js';
 
 export default class ImageDeliveryService {
-  private static strapiService: StrapiService;
+  private readonly strapiService: StrapiService;
 
-  static initialize(strapiService: StrapiService) {
-    ImageDeliveryService.strapiService = strapiService;
+  constructor(strapiService: StrapiService) {
+    this.strapiService = strapiService;
   }
 
   // Отправка изображения в Telegram
-  static async sendToTelegram(ctx: Context, image: Image, caption: string = ''): Promise<boolean> {
+  async sendToTelegram(ctx: Context, image: Image, caption: string = ''): Promise<boolean> {
     try {
       if (!image || !image.buffer) {
         console.error("Invalid image provided");
@@ -30,7 +30,7 @@ export default class ImageDeliveryService {
   }
 
   // Загрузка изображения в Strapi
-  static async sendToStrapi(image: Image): Promise<any> {
+  async sendToStrapi(image: Image): Promise<any> {
     try {
       if (!image || !image.buffer) {
         console.error("Invalid image provided");
@@ -41,7 +41,7 @@ export default class ImageDeliveryService {
         ? `Сгенерировано ботом: ${image.prompt}`
         : 'Изображение сгенерировано ботом';
 
-      return await ImageDeliveryService.strapiService.uploadImage(
+      return await this.strapiService.uploadImage(
         image.buffer,
         image.filename,
         description
@@ -53,7 +53,7 @@ export default class ImageDeliveryService {
   }
 
   // Комбинированная отправка: в Telegram и Strapi
-  static async sendToBoth(ctx: Context, image: Image): Promise<{
+  async sendToBoth(ctx: Context, image: Image): Promise<{
     telegramSuccess: boolean;
     strapiSuccess: boolean;
     strapiResult?: any;

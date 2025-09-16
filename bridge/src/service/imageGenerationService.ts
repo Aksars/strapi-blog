@@ -16,14 +16,14 @@ export interface ImageGenerationResult {
 }
 
 export default class ImageGenerationService {
-  private static openAIClient: OpenAI;
+  private readonly openAIClient: OpenAI;
 
-  static initialize(openAIClient: OpenAI) {
-    ImageGenerationService.openAIClient = openAIClient;
+  constructor(openAIClient: OpenAI) {
+    this.openAIClient = openAIClient;
   }
 
   // Основной метод генерации
-  static async generateImage(model: 'gpt' | 'dalle', prompt: string): Promise<ImageGenerationResult> {
+  async generateImage(model: 'gpt' | 'dalle', prompt: string): Promise<ImageGenerationResult> {
     try {
       console.time(`Генерация ${model}`);
       
@@ -49,9 +49,9 @@ export default class ImageGenerationService {
   }
 
   // Генерация через GPT
-  private static async generateWithGPT(prompt: string, model: string): Promise<Image | null> {
+  private async generateWithGPT(prompt: string, model: string): Promise<Image | null> {
     try {
-      const result = await ImageGenerationService.openAIClient.images.generate({
+      const result = await this.openAIClient.images.generate({
         model: "gpt-image-1",
         quality: "low",
         prompt,
@@ -82,9 +82,9 @@ export default class ImageGenerationService {
   }
 
   // Генерация через Dalle
-  private static async generateWithDalle(prompt: string, model: string): Promise<Image | null> {
+  private async generateWithDalle(prompt: string, model: string): Promise<Image | null> {
     try {
-      const result = await ImageGenerationService.openAIClient.images.generate({
+      const result = await this.openAIClient.images.generate({
         model: "dall-e-2",
         prompt,
         n: 1,
@@ -116,12 +116,12 @@ export default class ImageGenerationService {
   }
 
   // Генерация имени файла
-  private static generateFilename(model: string): string {
+  private generateFilename(model: string): string {
     return `${Date.now()}_${model}_image.png`;
   }
 
   // Валидация промпта
-  static validatePrompt(prompt: string): { isValid: boolean; message?: string } {
+  validatePrompt(prompt: string): { isValid: boolean; message?: string } {
     if (!prompt || prompt.trim().length < 3) {
       return { isValid: false, message: "Промпт слишком короткий" };
     }
