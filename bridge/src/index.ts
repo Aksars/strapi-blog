@@ -1,14 +1,14 @@
 
-import { InlineKeyboard } from 'grammy';
-import { ImageGeneratorFactory } from "./core/openAIGenerators.js";
-import { InputFile } from 'grammy';
-import { getTokens, initRedisStorage, createBot, initOpenAI } from './initialization/index.js';
+import { mainMenu, saveMenu, whereGetResultMenu } from './keyboards/index.js';
+import { getTokens, initRedisStorage, createBot, initOpenAI } from './init/index.js';
 import { logger } from './utils/logger.js'
-import { ImageService } from './core/imageService.js';
-import { StrapiService } from './core/strapiService.js';
-
-// Инициализируем Strapi сервис
-const strapiService = new StrapiService();
+import { DateUtils } from "./utils/dateUtils.js";
+import ImageGenerationService from "./service/imageGenerationService.js";
+import ImageDeliveryService from './service/imageDeliveryService.js';
+import StrapiService from "./service/strapiService.js";
+import FileImageService from './service/fileImageService.js'
+import { Context } from 'grammy';
+import { MyContext } from './types/session.js';
 
 // получаем и проверяем токены к боту и chatgpt
 const { token, apiToken } = getTokens()
@@ -20,16 +20,11 @@ const bot = createBot(storage, token)
 bot.start();
 logger.info(" 🤖 Бот запущен и слушает сообщения!")
 
-const imageService = new ImageService(openAIClient);
+// Инициализируем классы для работы с страпи, отправки, и генерации изображений
+const strapiService = new StrapiService()
+ImageGenerationService.initialize(openAIClient);
+ImageDeliveryService.initialize(strapiService);
 
-// создаем меню бота через билдер
-const mainMenu = new InlineKeyboard()
-  .text("🖼 Сгенерировать картинку (GPT)", "generate_gpt")
-  .text("🎨 Сгенерировать картинку (Dalle)", "generate_dalle")
-  .text("🔄 Сгенерировать + Strapi", "generate_to_strapi")
-  .row()
-  .text("🎲 Случайная картинка", "random_image")
-  .text("📝 Сгенерировать текст", "generate_text")
 
 // Команда старта с меню
 bot.command("start", async (ctx) => {
@@ -37,16 +32,48 @@ bot.command("start", async (ctx) => {
     reply_markup: mainMenu
   });
 });
+async function showMainMenu(ctx: Context) {
+  await ctx.reply("📋 Меню:", {
+    reply_markup: mainMenu
+  });
+}
+
+async function showSaveMenu(ctx: Context) {
+  await ctx.editMessageText("Сохранить изображение на сервер?", {
+    reply_markup: saveMenu
+  });
+}
 
 // Команда меню
 bot.command("menu", async (ctx) => {
   logger.info("menu", ctx);
-  await ctx.reply("📋 Меню:", {
+  await showMainMenu(ctx);
+});
+
+bot.callbackQuery("whereGetResultMenu", async (ctx) => {
+  await ctx.answerCallbackQuery(); // закрыть "часики"  
+  await ctx.editMessageText("📋 Меню:", {
+    reply_markup: whereGetResultMenu
+  });
+});
+
+bot.callbackQuery("menu", async (ctx) => {
+  await ctx.answerCallbackQuery(); // закрыть "часики"
+  await ctx.editMessageText("📋 Меню:", {
     reply_markup: mainMenu
   });
 });
 
+async function showAIMenu(ctx: MyContext) {
+  await ctx.editMessageText(`Выберите действие для ${ctx.session.model!.toLocaleUpperCase()}:`, {
+    reply_markup: whereGetResultMenu
+  });
+}
 
+  //await ctx.reply("Выберите действие для GPT:", { reply_markup: gptMenu });
+        // await ctx.reply("Напиши свой e-mail:", {
+        //   reply_markup: { force_reply: true, }
+        // });
 
 // Обработка callback-ов от кнопок
 bot.on("callback_query:data", async (ctx) => {
@@ -56,22 +83,66 @@ bot.on("callback_query:data", async (ctx) => {
     switch (action) {
       case "generate_gpt":
         await ctx.answerCallbackQuery();
-        // Используем сессию вместо userStates
-        ctx.session.state = 'waiting_gpt_prompt';
+        // Начинаем многошаговый процесс
+        ctx.session.state = 'choosing_action';
+        ctx.session.model = 'gpt';
         ctx.session.timestamp = Date.now();
-        await ctx.reply("Введите описание картинки для GPT модели:");
+
+        await showAIMenu(ctx)
         break;
- 
+
       case "generate_dalle":
         await ctx.answerCallbackQuery();
-        ctx.session.state = 'waiting_dalle_prompt';
+        ctx.session.state = 'choosing_action';
+        ctx.session.model = 'dalle';
         ctx.session.timestamp = Date.now();
-        await ctx.reply("Введите описание картинки для Dalle модели:");
+
+        await showAIMenu(ctx)
+        break;
+
+      case "action_just_generate":
+        await ctx.answerCallbackQuery();
+        ctx.session.action = 'generate';
+        ctx.session.state = 'choosing_save_option';
+        ctx.session.timestamp = Date.now();
+
+        await showSaveMenu(ctx)
+        break;
+
+      case "action_generate_and_upload":
+        await ctx.answerCallbackQuery();
+        ctx.session.action = 'generate_and_upload';
+        ctx.session.state = 'choosing_save_option';
+        ctx.session.timestamp = Date.now();
+
+        await showSaveMenu(ctx)
+        break;
+
+      case "save_yes":
+        await ctx.answerCallbackQuery();
+        ctx.session.saveToServer = true;
+        ctx.session.state = 'waiting_prompt';
+        ctx.session.timestamp = Date.now();
+
+        await ctx.editMessageText("💾 Буду сохранять на сервер. Теперь введите описание картинки:");
+        break;
+
+      case "save_no":
+        await ctx.answerCallbackQuery();
+        ctx.session.saveToServer = false;
+        ctx.session.state = 'waiting_prompt';
+        ctx.session.timestamp = Date.now();
+
+        await ctx.editMessageText("🚫 Не буду сохранять на сервер. Теперь введите описание картинки:");
         break;
 
       case "random_image":
         await ctx.answerCallbackQuery();
-        await imageService.sendRandomImageFromFolder(ctx);
+        const img = await FileImageService.getRandomImage();
+        if (img)
+          await ImageDeliveryService.sendToTelegram(ctx, img)
+        else
+          await ctx.reply("Не получилось отправить ни одну картинку(( 🚧");
         break;
 
       case "generate_text":
@@ -79,12 +150,6 @@ bot.on("callback_query:data", async (ctx) => {
         await ctx.reply("Генерация текста скоро будет доступна! 🚧");
         break;
 
-      case "generate_to_strapi":
-        await ctx.answerCallbackQuery();
-        ctx.session.state = 'generate_to_strapi';
-        ctx.session.timestamp = Date.now();    
-        await ctx.reply("Введите описание картинки для Страпи:");   
-        break;
     }
   } catch (error) {
     console.error("Ошибка обработки кнопки:", error);
@@ -92,92 +157,33 @@ bot.on("callback_query:data", async (ctx) => {
     // Очищаем состояние при ошибке
     ctx.session.state = undefined;
     ctx.session.timestamp = undefined;
+    ctx.session.model = undefined;
+    ctx.session.action = undefined;
+    ctx.session.saveToServer = undefined;
   }
 });
 
 
 
-async function generateAndSendToStrapi(ctx: any, prompt: string) {
-  try {
-    await ctx.reply(`🔄 Генерирую картинку и загружаю в Strapi...`);
-
-    // Можно выбрать модель по умолчанию или дать выбор
-    const generator = ImageGeneratorFactory.createGenerator('dalle', openAIClient);
-    const result = await generator.generate(prompt);
-
-    if (!result) {
-      await ctx.reply("⚠️ Не удалось сгенерировать картинку");
-      return;
-    }
-
-    logger.info("вызываю загрузку в страпи")
-    
-    // Загружаем в Strapi
-    const strapiMedia = await strapiService.uploadImage(
-      result.buffer,
-      result.filename,
-      `Сгенерировано ботом: ${prompt}`
-    );
-
-    if (strapiMedia) {
-      await ctx.replyWithPhoto(
-        new InputFile(result.buffer, result.filename),
-        {
-          caption: `✅ Загружено в Strapi!\n🎨 "${prompt}"\n📁 ${result.filename}\n🔗 ID: ${strapiMedia.id}`
-        }
-      );
-    } else {
-      await ctx.replyWithPhoto(
-        new InputFile(result.buffer, result.filename),
-        {
-          caption: `🎨 "${prompt}"\n📁 ${result.filename}\n⚠️ Не удалось загрузить в Strapi`
-        }
-      );
-    }
-
-  } catch (err) {
-    console.error("Ошибка генерации для Strapi:", err);
-    await ctx.reply("⚠️ Ошибка при генерации или загрузке в Strapi");
-  }
-}
 
 
+bot.command("test", async (ctx) => {
+  // await ctx.reply("Выбери:", {
+  //   reply_markup: {
+  //     keyboard: [
+  //       [{ text: "Кнопка 1" }, { text: "Кнопка 2" }],
+  //       [{ text: "Поделиться номером", request_contact: true }],
+  //       [{ text: "Поделиться геопозицией", request_location: true }]
+  //     ],
+  //     resize_keyboard: true,
+  //     one_time_keyboard: true
+  //   }
+  // });
 
-async function generateAndSendImage(ctx: any, model: 'gpt' | 'dalle', prompt: string) {
-  try {
-    await ctx.reply(`🔄 Генерирую картинку моделью ${model}...`);
-
-    const generator = ImageGeneratorFactory.createGenerator(model, openAIClient);
-    const result = await generator.generate(prompt);
-
-    if (!result) {
-      await ctx.reply("⚠️ Не удалось сгенерировать картинку");
-      return;
-    }
-
-
-
-    await ctx.replyWithPhoto(
-      new InputFile(result.buffer, result.filename),
-      {
-        caption: `🎨 ${model.toUpperCase()}: "${prompt}"\n📁 ${result.filename}`
-      }
-    );
-
-    await ctx.reply("✅ Готово! Используйте /menu для новых действий");
-
-  } catch (err) {
-    console.error("Ошибка генерации:", err);
-    await ctx.reply("⚠️ Ошибка при генерации картинки");
-  }
-}
-
-
-
-
-
-
-
+  // await ctx.reply("Напиши свой e-mail:", {
+  //   reply_markup: { force_reply: true }
+  // });
+})
 
 // Команда для просмотра текущих сессий (только для админов)
 bot.command("sessions", async (ctx) => {
@@ -230,109 +236,43 @@ bot.command("sessions", async (ctx) => {
 });
 
 
-bot.command("give", (ctx) => imageService.sendRandomImageFromFolder(ctx));
+bot.command("give", async (ctx) => {
+  const img = FileImageService.getRandomImage();
+  if (img)
+    await ImageDeliveryService.sendToTelegram(ctx, img)
+  else
+    await ctx.reply("❌ Ошибка при чтении сессий");
+})
 
 bot.command("stats", async (ctx) => {
-  const stats = await imageService.getImageStats();
+  const stats = await FileImageService.getImageStats();
 
   let telegramDate;
   if (ctx.message && ctx.message.date) {
     telegramDate = new Date(ctx.message.date * 1000);
   }
-  const mskTimeNow = mskTime()
+  const mskTimeNow = DateUtils.mskTime();
+
+  // Безопасное использование lastCreated
+  const lastCreatedText = stats.lastCreated
+    ? DateUtils.smartTimeDiff(stats.lastCreated, telegramDate)
+    : 'никогда';
 
   const message =
     `📦 *Статистика хранилища*\n` +
     `├ 🖼️      ${stats.totalImages} файлов\n` +
     `├ 💾      ${stats.totalSizeMB}\n` +
     `├ 📈      ${stats.avgSizeMB} в среднем\n` +
-    `├ ⏰🔄  ${smartTimeDiff(stats.lastCreated, telegramDate)} по MSK последний апдейт \n` +
+    `├ ⏰🔄  ${lastCreatedText} по MSK последний апдейт \n` +
     `├ ⏰🖥️  ${mskTimeNow} по MSK на сервере\n` +
-    `├ ⏰📨  ${telegramDate ? mskTime(telegramDate) : 'N/A'} время последнего сообщения в ТГ\n` +   
-    `└ ⏱️💚  ${formatUptime(process.uptime())} Server Uptime`;
+    `├ ⏰📨  ${telegramDate ? DateUtils.mskTime(telegramDate) : 'N/A'} время последнего сообщения в ТГ\n` +
+    `└ ⏱️💚  ${DateUtils.formatUptime(process.uptime())} Server Uptime`;
+
   await ctx.reply(message);
 });
 
 // `├ 📶 ${calculatePing()}ms Пинг\n` +
 
-function smartTimeDiff(date: Date, now: Date = new Date(), timeZone: string = 'Europe/Moscow'): string {
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  const timeStr = date.toLocaleTimeString('ru-RU', {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: timeZone
-  });
-
-  if (diffDays < 1) {
-    return `Сегодня в ${timeStr}`;
-  } else if (diffDays === 1) {
-    return `Вчера в ${timeStr}`;
-  } else if (diffDays < 7) {
-    return `${diffDays} дн. назад в ${timeStr}`;
-  } else {
-    return date.toLocaleDateString('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      timeZone: timeZone
-    });
-  }
-}
-
-
-function formatUptime(seconds: number): string {
-    const days = Math.floor(seconds / (24 * 60 * 60));
-    const hours = Math.floor((seconds % (24 * 60 * 60)) / (60 * 60));
-    const minutes = Math.floor((seconds % (60 * 60)) / 60);
-    
-    const parts = [];
-    if (days > 0) parts.push(`${days}д`);
-    if (hours > 0) parts.push(`${hours}ч`);
-    if (minutes > 0) parts.push(`${minutes}м`);
-    
-    return parts.join(' ') || '0м';
-}
-
-
-
-function mskTime(date: Date = new Date()) {
-  return date.toLocaleTimeString('ru-RU', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    timeZone: 'Europe/Moscow'
-  })
-}
-
-
-
-// utils/dateFormatter.ts
-export const DateFormatter = {
-  relative: (date: Date): string => {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffMinutes = Math.floor(diffMs / (1000 * 60));
-
-    if (diffDays > 0) return `${diffDays} дн. назад`;
-    if (diffHours > 0) return `${diffHours} час. назад`;
-    if (diffMinutes > 0) return `${diffMinutes} мин. назад`;
-    return 'только что';
-  },
-
-  exact: (date: Date): string => {
-    return date.toLocaleString('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
-};
 
 // // Использование
 // message += `🕐 Создан: ${DateFormatter.relative(file.createdAt)}\n`;
@@ -358,40 +298,105 @@ bot.on('message:text', async (ctx) => {
     const stateAge = now - ctx.session.timestamp;
 
     if (stateAge > STATE_TIMEOUT) {
-      // Состояние устарело
       await ctx.reply("⏰ Время ожидания истекло. Выберите действие снова через /menu");
-      // Очищаем сессию
-      ctx.session.state = undefined;
-      ctx.session.timestamp = undefined;
+      // Полностью очищаем сессию
+      ctx.session = {};
       return;
     }
 
     try {
       const currentState = ctx.session.state;
+      const model = ctx.session.model;
+      const action = ctx.session.action;
+      const saveToServer = ctx.session.saveToServer;
 
       // Очищаем состояние перед обработкой
-      ctx.session.state = undefined;
-      ctx.session.timestamp = undefined;
+      ctx.session = {};
 
-      if (currentState === 'waiting_gpt_prompt') {
-        await generateAndSendImage(ctx, 'gpt', prompt);
-      } else if (currentState === 'waiting_dalle_prompt') {
-        await generateAndSendImage(ctx, 'dalle', prompt);
-      }else if(currentState === 'generate_to_strapi'){
-        await generateAndSendToStrapi(ctx, prompt)
+      if (currentState === 'waiting_prompt' && model && action) {
+        await handleImageGeneration(ctx, prompt, model, action, saveToServer);
+      } else if (currentState === 'generate_to_strapi') {
+        await handleStrapiGeneration(ctx, prompt);
       }
-      
+
     } catch (error) {
       console.error("Ошибка обработки промпта:", error);
       await ctx.reply("❌ Ошибка при обработке запроса");
+      ctx.session = {};
     }
   } else {
     // Обычное сообщение без состояния
-
     logger.info("text", ctx);
   }
 });
 
+// Выносим логику обработки в отдельные функции для чистоты
+async function handleImageGeneration(ctx: any, prompt: string, model: 'gpt' | 'dalle', action: string, saveToServer: boolean = true) {
+  await ctx.reply(`🔄 Генерирую картинку моделью ${model}...`);
+
+  const result = await ImageGenerationService.generateImage(model, prompt);
+
+  if (!result.success || !result.image) {
+    await ctx.reply("❌ Не удалось сгенерировать картинку");
+    return;
+  }
+
+  // Сохраняем на сервер если нужно
+  if (saveToServer) {
+    const saved = FileImageService.saveImage(result.image);
+    if (saved) {
+      await ctx.reply("💾 Изображение сохранено на сервер");
+    }
+  }
+
+  // Отправляем в Telegram
+  const sent = await ImageDeliveryService.sendToTelegram(
+    ctx,
+    result.image,
+    `🎨 ${model.toUpperCase()}: "${prompt}"\n📁 ${result.image.filename}`
+  );
+
+  if (!sent) {
+    await ctx.reply("⚠️ Картинка сгенерирована, но не удалось отправить");
+  }
+
+  // Если нужно отправить в Strapi
+  if (action === 'generate_and_upload') {
+    await ctx.reply("🔄 Отправляю в Strapi...");
+    const strapiResult = await ImageDeliveryService.sendToStrapi(result.image);
+
+    if (strapiResult) {
+      await ctx.reply("✅ Успешно загружено в Strapi!");
+    } else {
+      await ctx.reply("⚠️ Не удалось загрузить в Strapi");
+    }
+  }
+
+  await ctx.reply("✅ Готово! Используйте /menu для новых действий");
+}
+
+async function handleStrapiGeneration(ctx: any, prompt: string) {
+  // Старая логика для обратной совместимости
+  await ctx.reply(`🔄 Генерирую картинку и загружаю в Strapi...`);
+
+  const result = await ImageGenerationService.generateImage('dalle', prompt);
+
+  if (!result.success || !result.image) {
+    await ctx.reply("❌ Не удалось сгенерировать картинку");
+    return;
+  }
+
+  // Сохраняем на сервер по умолчанию
+  FileImageService.saveImage(result.image);
+
+  const deliveryResult = await ImageDeliveryService.sendToBoth(ctx, result.image);
+
+  if (deliveryResult.strapiSuccess) {
+    await ctx.reply("✅ Успешно загружено в Strapi!");
+  } else {
+    await ctx.reply("⚠️ Изображение отправлено, но возникли проблемы с Strapi");
+  }
+}
 
 
 
@@ -438,5 +443,4 @@ bot.use(async (ctx, next) => {
 //     reply_markup: imageMenu
 //   });
 // });
-
 

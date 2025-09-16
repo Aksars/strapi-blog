@@ -1,9 +1,6 @@
-import { Bot, session as grammySession, SessionFlavor, Context } from 'grammy';
-import { RedisAdapter } from '@grammyjs/storage-redis';
-import { SessionData } from "../types/session.js"; 
+import { Bot, session as grammySession} from 'grammy';
+import { SessionData, MyContext, SessionStorage } from "../types/session.js"; 
 
-export type MyContext = Context & SessionFlavor<SessionData>;
-export type SessionStorage = RedisAdapter<SessionData>;
 
 // Создание бота
 export function createBot(storage: SessionStorage, token: string) {

@@ -1,5 +1,4 @@
-// services/strapiService.ts
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import FormData from 'form-data';
 import { Readable } from 'stream';
 import { logger } from '../utils/logger.js';
@@ -23,31 +22,48 @@ export interface StrapiMedia {
   updatedAt: string;
 }
 
-export class StrapiService {
-  private baseURL: string;
-  private token?: string;
+export interface StrapiServiceConfig {
+  baseURL?: string;
+  token?: string;
+  timeout?: number;
+}
 
-  constructor() {
-    this.baseURL = process.env.STRAPI_URL || 'http://strapi:1337';
-    this.token = process.env.STRAPI_TOKEN;
-    
-    if (!this.token) {
+export default class StrapiService {
+  private readonly client: AxiosInstance;
+  private readonly config: StrapiServiceConfig;
+
+  constructor(config: StrapiServiceConfig = {}) {
+    this.config = {
+      baseURL: process.env.STRAPI_URL || 'http://strapi:1337',
+      token: process.env.STRAPI_TOKEN,
+      timeout: 30000,
+      ...config
+    };
+
+    if (!this.config.token) {
       logger.warn('STRAPI_TOKEN не установлен. Загрузка в Strapi будет недоступна');
     }
+
+    this.client = axios.create({
+      baseURL: this.config.baseURL,
+      timeout: this.config.timeout,
+      headers: {
+        'Authorization': this.config.token ? `Bearer ${this.config.token}` : undefined
+      }
+    });
   }
 
   async uploadImage(buffer: Buffer, filename: string, caption?: string): Promise<StrapiMedia | null> {
-    if (!this.token) {
+    if (!this.config.token) {
       logger.warn('Пропускаем загрузку в Strapi: токен не установлен');
       return null;
     }
 
-    logger.info(`Будем грузить в страпи картинку, файлнейм ${filename} заголовок ${caption}`)
+    logger.info(`Загрузка в Strapi: ${filename}, заголовок: ${caption}`);
 
     try {
       const formData = new FormData();
       
-      // Конвертируем Buffer в Stream для FormData
       const stream = Readable.from(buffer);
       formData.append('files', stream, {
         filename: filename,
@@ -59,18 +75,16 @@ export class StrapiService {
         caption: caption || `Сгенерировано ботом: ${filename}`
       }));
 
-      const response = await axios.post(
-        `${this.baseURL}/api/upload`,
+      const response = await this.client.post(
+        '/api/upload',
         formData,
         {
           headers: {
-            'Authorization': `Bearer ${this.token}`,
             ...formData.getHeaders()
-          },
-          timeout: 30000
+          }
         }
       );
-      logger.info(`Пришел респонс при загрузке по апи ${response}`)
+
       logger.info(`Изображение загружено в Strapi: ${response.data[0].name}`);
       return response.data[0];
 
@@ -81,19 +95,37 @@ export class StrapiService {
   }
 
   async getMediaById(id: number): Promise<StrapiMedia | null> {
+    if (!this.config.token) {
+      return null;
+    }
+
     try {
-      const response = await axios.get(
-        `${this.baseURL}/api/upload/files/${id}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${this.token}`
-          }
-        }
-      );
+      const response = await this.client.get(`/api/upload/files/${id}`);
       return response.data;
     } catch (error) {
       logger.error('Ошибка получения медиа из Strapi:', error);
       return null;
+    }
+  }
+
+  // Дополнительные полезные методы
+  async deleteMedia(id: number): Promise<boolean> {
+    try {
+      await this.client.delete(`/api/upload/files/${id}`);
+      return true;
+    } catch (error) {
+      logger.error('Ошибка удаления медиа из Strapi:', error);
+      return false;
+    }
+  }
+
+  async getMediaList(): Promise<StrapiMedia[]> {
+    try {
+      const response = await this.client.get('/api/upload/files');
+      return response.data;
+    } catch (error) {
+      logger.error('Ошибка получения списка медиа из Strapi:', error);
+      return [];
     }
   }
 }
