@@ -1,123 +1,353 @@
 import { Bot } from 'grammy';
 import { MyContext } from '../types/session.js';
-import FileImageService from '../service/fileImageService.js';
+import { switchMainMenu, showTextActions, showImageActions } from '../keyboards/index.js';
+import { ImageGenerationService } from '../service/imageGenerationService.js';
+import { TextGenerationService } from '../service/textGenerationService.js';
+import { ImageModel, TextModel } from '../types/models.js';
+import { InputFile } from 'grammy';
 import ImageDeliveryService from '../service/imageDeliveryService.js';
-import ImageGenerationService from '../service/imageGenerationService.js';
-import { logger } from '../utils/logger.js';
+import StrapiService from '../service/strapiService.js';
 
-export function setupMessageHandlers(bot: Bot<MyContext>,
-    imageDeliveryService: ImageDeliveryService,
-    imageGenerationService: ImageGenerationService) {
+export function setupMessageHandlers(
+  bot: Bot<MyContext>,
+   imageDeliveryService: ImageDeliveryService,
+   imageGenerationService: ImageGenerationService,
+   textGenerationService: TextGenerationService,
+   strapiService: StrapiService
+) {
+  // Обработка текстовых сообщений
+  bot.on('message:text', async (ctx) => {
+    const session = ctx.session;
+    const messageText = ctx.message.text;
 
-    // Обработка текстовых сообщений (для состояний)
-    bot.on('message:text', async (ctx) => {
-        const prompt = ctx.message.text;
-        const STATE_TIMEOUT = 10 * 60 * 1000; // 10 минут
-
-        // Проверяем есть ли состояние в сессии и не устарело ли оно
-        if (ctx.session.state && ctx.session.timestamp && prompt) {
-            const now = Date.now();
-            const stateAge = now - ctx.session.timestamp;
-
-            if (stateAge > STATE_TIMEOUT) {
-                await ctx.reply("⏰ Время ожидания истекло. Выберите действие снова через /menu");
-                // Полностью очищаем сессию
-                ctx.session = {};
-                return;
-            }
-
-            try {
-                const currentState = ctx.session.state;
-                const model = ctx.session.model;
-                const action = ctx.session.action;
-                const saveToServer = ctx.session.saveToServer;
-
-                // Очищаем состояние перед обработкой
-                ctx.session = {};
-
-                if (currentState === 'waiting_prompt' && model && action) {
-                    await handleImageGeneration(ctx, prompt, model, action, saveToServer);
-                } else if (currentState === 'generate_to_strapi') {
-                    await handleStrapiGeneration(ctx, prompt);
-                }
-
-            } catch (error) {
-                console.error("Ошибка обработки промпта:", error);
-                await ctx.reply("❌ Ошибка при обработке запроса");
-                ctx.session = {};
-            }
-        } else {
-            // Обычное сообщение без состояния
-            logger.info("text", ctx);
-        }
-    });
-
-    // Выносим логику обработки в отдельные функции для чистоты
-    async function handleImageGeneration(ctx: any, prompt: string, model: 'gpt' | 'dalle', action: string, saveToServer: boolean = true) {
-        await ctx.reply(`🔄 Генерирую картинку моделью ${model}...`);
-
-        const result = await imageGenerationService.generateImage(model, prompt);
-
-        if (!result.success || !result.image) {
-            await ctx.reply("❌ Не удалось сгенерировать картинку");
-            return;
-        }
-
-        // Сохраняем на сервер если нужно
-        if (saveToServer) {
-            const saved = FileImageService.saveImage(result.image);
-            if (saved) {
-                await ctx.reply("💾 Изображение сохранено на сервер");
-            }
-        }
-
-        // Отправляем в Telegram
-        const sent = await imageDeliveryService.sendToTelegram(
-            ctx,
-            result.image,
-            `🎨 ${model.toUpperCase()}: "${prompt}"\n📁 ${result.image.filename}`
-        );
-
-        if (!sent) {
-            await ctx.reply("⚠️ Картинка сгенерирована, но не удалось отправить");
-        }
-
-        // Если нужно отправить в Strapi
-        if (action === 'generate_and_upload') {
-            await ctx.reply("🔄 Отправляю в Strapi...");
-            const strapiResult = await imageDeliveryService.sendToStrapi(result.image);
-
-            if (strapiResult) {
-                await ctx.reply("✅ Успешно загружено в Strapi!");
-            } else {
-                await ctx.reply("⚠️ Не удалось загрузить в Strapi");
-            }
-        }
-
-        await ctx.reply("✅ Готово! Используйте /menu для новых действий");
+    // Пропускаем команды
+    if (messageText.startsWith('/')) {
+      return;
     }
 
-    async function handleStrapiGeneration(ctx: any, prompt: string) {
-        // Старая логика для обратной совместимости
-        await ctx.reply(`🔄 Генерирую картинку и загружаю в Strapi...`);
+    try {
+      switch (session.state) {
+        case 'waiting_text_prompt':
+          await handleTextPrompt(ctx, messageText);
+          break;
 
-        const result = await imageGenerationService.generateImage('dalle', prompt);
+        case 'waiting_image_prompt':
+          await handleImagePrompt(ctx, messageText);
+          break;
 
-        if (!result.success || !result.image) {
-            await ctx.reply("❌ Не удалось сгенерировать картинку");
-            return;
-        }
+        case 'waiting_temperature_prompt':
+          await handleMadnessPrompt(ctx, messageText);
+          break;          
 
-        // Сохраняем на сервер по умолчанию
-        FileImageService.saveImage(result.image);
-
-        const deliveryResult = await imageDeliveryService.sendToBoth(ctx, result.image);
-
-        if (deliveryResult.strapiSuccess) {
-            await ctx.reply("✅ Успешно загружено в Strapi!");
-        } else {
-            await ctx.reply("⚠️ Изображение отправлено, но возникли проблемы с Strapi");
-        }
+        default:
+          // Если нет активного состояния, показываем меню
+          await ctx.reply("Выберите действие через /menu");
+          break;
+      }
+    } catch (error) {
+      console.error("Ошибка обработки сообщения:", error);
+      await ctx.reply("❌ Произошла ошибка при обработке запроса");
+      await switchMainMenu(ctx);
     }
+  });
+
+
+
+
+   // Отправляем результат
+        // await ctМодель: ${model}*\n` +
+        //   `📊 *Токенов использовано: ${result.usage?.total_tokens || 'N/A'}*`
+        // );
+
+        // // Предлагаем действия
+        // await ctx.reply(
+        //   "Что дальше?\n\n" +
+        //   "• /regenerate - Сгенерировать заново\n" +
+        //   "• /new_text - Новый запрос\n" +
+        //   "• /menu - Главное меню",
+        //   { parse_mode: 'Markdown' }
+        // );x.api.editMessageText(
+        //   ctx.chat?.id!,         
+        //   `📝 **Результат генерации:**\n\n${result.text}\n\n` +
+        //   `🔧 *
+
+//  async function generateText(params: {
+//   ctx: MyContext;
+//   textService: TextGenerationService;
+//   prompt: string;
+//   model: TextModel;
+//   temperature?: number ;
+// }) {
+//   const { ctx, textService, prompt, model } = params;
+//   let {temperature = 0.8 } = params
+//     try {
+//       //температура от 0 до 2; t < 2 ==> 2
+//       temperature = temperature < 0 ? 0 : temperature
+//       temperature = temperature > 2 ? 2 : temperature;
+//       // Показываем сообщение о начале генерации
+//       await ctx.reply("⏳ Генерируем текст...");
+
+//       // Генерация текста
+//       const result = await textService.generateText(prompt, {
+//         model: model,
+//         temperature: temperature
+//       });
+
+//       if (result.success && result.text) {
+//         // Сохраняем результат в сессии
+//         ctx.session.tempData = {
+//           prompt,
+//           generatedText: result.text
+//         };      
+
+//       } else {
+//         await ctx.editMessageText(`❌ Ошибка генерации: ${result.error || 'Неизвестная ошибка'}`);
+//         await switchMainMenu(ctx);
+//       }
+
+//     } catch (error) {
+//       console.error("Ошибка генерации текста:", error);
+//       await ctx.editMessageText("❌ Произошла ошибка при генерации текста");
+//       await switchMainMenu(ctx);
+//     }
+//   }
+
+
+async function handleMadnessPrompt(ctx: MyContext, prompt: string) {
+  
 }
 
+  // Обработка текстового промпта
+  async function handleTextPrompt(ctx: MyContext, prompt: string) {
+    const session = ctx.session;
+
+    if (!session.textModel) {
+      await ctx.reply("❌ Модель не выбрана. Используйте /menu");
+      return;
+    }
+
+    // Валидация промпта
+    const validation = textGenerationService.validatePrompt(prompt);
+    if (!validation.isValid) {
+      await ctx.reply(`❌ ${validation.message}`);
+      return;
+    }
+
+    // Сохраняем промпт в сессии
+    session.tempData = { prompt };
+
+    // Показываем сообщение о начале генерации
+    const loadingMsg = await ctx.reply("⏳ Генерируем текст...");
+ //температура от 0 до 2; t < 2 ==> 2
+    
+      // temperature = temperature < 0 ? 0 : temperature
+      // temperature = temperature > 2 ? 2 : temperature;
+    try {
+      // Генерация текста
+      const result = await textGenerationService.generateText(prompt, {
+        model: session.textModel ,
+        temperature: 0.7,
+        max_tokens: 1000
+      });
+
+      if (result.success && result.text) {
+        // Обновляем сообщение о загрузке на результат
+        await ctx.api.editMessageText(
+          ctx.chat?.id!,
+          loadingMsg.message_id,
+          `📝 **Результат генерации:**\n\n${result.text}\n\n` +
+          `🔧 *Модель: ${session.textModel}*\n` +
+          `📊 *Токенов использовано: ${result.usage?.total_tokens || 'N/A'}*`,
+          { parse_mode: 'Markdown' }
+        );
+
+        // Сохраняем сгенерированный текст в сессии
+        session.tempData.generatedText = result.text;
+
+        // Показываем действия после генерации
+        await showTextActions(ctx);
+
+      } else {
+        await ctx.api.editMessageText(
+          ctx.chat?.id!,
+          loadingMsg.message_id,
+          `❌ Ошибка генерации: ${result.error || 'Неизвестная ошибка'}`
+        );
+        await switchMainMenu(ctx);
+      }
+
+    } catch (error) {
+      console.error("Ошибка генерации текста:", error);
+      await ctx.api.editMessageText(
+        ctx.chat?.id!,
+        loadingMsg.message_id,
+        "❌ Произошла ошибка при генерации текста"
+      );
+      await switchMainMenu(ctx);
+    } finally {
+      session.state = undefined;
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  // Обработка промпта для изображений
+  async function handleImagePrompt(ctx: MyContext, prompt: string) {
+    const session = ctx.session;
+
+    if (!session.imageModel) {
+      await ctx.reply("❌ Модель не выбрана. Используйте /menu");
+      return;
+    }
+
+    // Валидация промпта
+    const validation = imageGenerationService.validatePrompt(prompt);
+    if (!validation.isValid) {
+      await ctx.reply(`❌ ${validation.message}`);
+      return;
+    }
+
+    // Сохраняем промпт в сессии
+    session.tempData = { prompt };
+
+    // Показываем сообщение о начале генерации
+    const loadingMsg = await ctx.reply("🎨 Генерируем изображение...");
+
+    try {
+      // Генерация изображения
+      const result = await imageGenerationService.generateImage(
+        session.imageModel ,
+        prompt
+      );
+
+      if (result.success && result.image) {
+        // Сохраняем изображение в сессии
+        session.tempData.image = result.image;
+
+        // Отправляем изображение
+        await ctx.api.sendPhoto(
+          ctx.chat?.id!,
+          new InputFile(result.image.buffer, result.image.filename),
+          {
+            caption: `🖼️ **Сгенерировано:** ${prompt}\n🔧 *Модель: ${session.imageModel}*`,
+            parse_mode: 'Markdown'
+          }
+        );
+
+        // Удаляем сообщение о загрузке
+        await ctx.api.deleteMessage(ctx.chat?.id!, loadingMsg.message_id);
+
+        // Показываем действия после генерации
+        await showImageActions(ctx);
+
+      } else {
+        await ctx.api.editMessageText(
+          ctx.chat?.id!,
+          loadingMsg.message_id,
+          `❌ Ошибка генерации: ${result.error || 'Неизвестная ошибка'}`
+        );
+        await switchMainMenu(ctx);
+      }
+
+    } catch (error) {
+      console.error("Ошибка генерации изображения:", error);
+      await ctx.api.editMessageText(
+        ctx.chat?.id!,
+        loadingMsg.message_id,
+        "❌ Произошла ошибка при генерации изображения"
+      );
+      await switchMainMenu(ctx);
+    } finally {
+      session.state = undefined;
+    }
+  }
+
+  // Обработка команды регенерации текста
+  bot.command('regenerate', async (ctx) => {
+    const session = ctx.session;
+    const prompt = session.tempData?.prompt;
+    const textModel = session.textModel;
+
+    if (!prompt || !textModel) {
+      await ctx.reply("❌ Нет данных для регенерации. Начните новую генерацию через /menu");
+      return;
+    }
+
+    // Показываем сообщение о начале генерации
+    const loadingMsg = await ctx.reply("⏳ Регенерируем текст...");
+
+    try {
+      const result = await textGenerationService.generateText(prompt, {
+        model: textModel,
+        temperature: 0.7,
+        max_tokens: 1000
+      });
+
+      if (result.success && result.text) {
+        // Обновляем сообщение о загрузке на результат
+        await ctx.api.editMessageText(
+          ctx.chat?.id!,
+          loadingMsg.message_id,
+          `📝 **Результат регенерации:**\n\n${result.text}\n\n` +
+          `🔧 *Модель: ${textModel}*\n` +
+          `📊 *Токенов использовано: ${result.usage?.total_tokens || 'N/A'}*`,
+          { parse_mode: 'Markdown' }
+        );
+
+        // Обновляем сгенерированный текст в сессии
+        session.tempData!.generatedText = result.text;
+
+        // Показываем действия после генерации
+        await showTextActions(ctx);
+
+      } else {
+        await ctx.api.editMessageText(
+          ctx.chat?.id!,
+          loadingMsg.message_id,
+          `❌ Ошибка регенерации: ${result.error || 'Неизвестная ошибка'}`
+        );
+      }
+
+    } catch (error) {
+      console.error("Ошибка регенерации текста:", error);
+      await ctx.api.editMessageText(
+        ctx.chat?.id!,
+        loadingMsg.message_id,
+        "❌ Произошла ошибка при регенерации текста"
+      );
+    }
+  });
+
+  // Обработка команды нового текста
+  bot.command('new_text', async (ctx) => {
+    ctx.session.state = 'waiting_text_prompt';
+    ctx.session.textModel = ctx.session.textModel || TextModel.GPT35;
+    
+    await ctx.reply(
+      `🧠 Модель: ${ctx.session.textModel}\n\nВведите текст для генерации:`
+    );
+  });
+
+  // Обработка команды нового изображения
+  bot.command('new_image', async (ctx) => {
+    ctx.session.state = 'waiting_image_prompt';
+    ctx.session.imageModel = ctx.session.imageModel || ImageModel.GPT;
+    
+    await ctx.reply(
+      `🎨 Модель: ${ctx.session.imageModel}\n\nВведите описание картинки:`
+    );
+  });
+}

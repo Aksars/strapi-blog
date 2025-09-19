@@ -1,11 +1,11 @@
 import { Bot } from 'grammy';
 import { MyContext } from '../types/session.js';
-import { showAIMenu, showMainMenu, showSaveMenu } from '../keyboards/index.js';
+import { showMainMenu, showSaveMenu } from '../keyboards/index.js';
 import FileImageService from '../service/fileImageService.js';
 import ImageDeliveryService from '../service/imageDeliveryService.js';
 import { logger } from '../utils/logger.js';
 import { DateUtils } from '../utils/dateUtils.js';
-import ImageGenerationService from '../service/imageGenerationService.js';
+import {ImageGenerationService} from '../service/imageGenerationService.js';
 
 export function setupCommandHandlers(bot: Bot<MyContext>, imageDeliveryService: ImageDeliveryService, imageGenerationService:ImageGenerationService) {
 

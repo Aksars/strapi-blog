@@ -1,7 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import { formatFileSize } from '../utils/sizeFormater.js';
-import type { Image } from './imageGenerationService.js';
+import type { Image, PoorImage } from '../types/image.js';
+
 
 export default class FileImageService {
   // Сохранение изображения в папку
@@ -22,7 +23,7 @@ export default class FileImageService {
   }
 
   // Получение случайного изображения из папки
-  static getRandomImage(folderPath: string = "./images"): Image | null {
+  static getRandomImage(folderPath: string = "./images"): PoorImage | null {
     try {
       const files = fs.readdirSync(folderPath);
 
@@ -40,15 +41,12 @@ export default class FileImageService {
 
       const randomFile = imageFiles[Math.floor(Math.random() * imageFiles.length)];
       const filePath = path.join(folderPath, randomFile);
-
       const buffer = fs.readFileSync(filePath);
       const stats = fs.statSync(filePath);
 
       return {
         buffer,
-        filename: randomFile,
-        prompt: '', // Не знаем промпт для существующих файлов
-        model: 'unknown',
+        filename: randomFile,  
         size: stats.size
       };
 

@@ -7,6 +7,8 @@ export interface Image {
   size?: number;
 }
 
+export type PoorImage = Pick<Image, 'buffer' | 'filename' | 'size'>;
+
 export interface ImageGenerationResult {
   success: boolean;
   image?: Image;

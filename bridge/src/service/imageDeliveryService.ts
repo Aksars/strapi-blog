@@ -1,6 +1,6 @@
 import { InputFile } from 'grammy';
 import type { Context } from 'grammy';
-import type { Image } from './imageGenerationService.js';
+import type { Image, PoorImage } from '../types/image.js';
 import StrapiService from './strapiService.js';
 
 export default class ImageDeliveryService {
@@ -11,7 +11,7 @@ export default class ImageDeliveryService {
   }
 
   // Отправка изображения в Telegram
-  async sendToTelegram(ctx: Context, image: Image, caption: string = ''): Promise<boolean> {
+  async sendToTelegram(ctx: Context, image: Image | PoorImage, caption: string = ''): Promise<boolean> {
     try {
       if (!image || !image.buffer) {
         console.error("Invalid image provided");
@@ -30,7 +30,7 @@ export default class ImageDeliveryService {
   }
 
   // Загрузка изображения в Strapi
-  async sendToStrapi(image: Image): Promise<any> {
+  async sendToStrapi(image: Image ): Promise<any> {
     try {
       if (!image || !image.buffer) {
         console.error("Invalid image provided");

@@ -1,6 +1,6 @@
 import { getTokens, initRedisStorage, createBot, initOpenAI } from './init/index.js';
 import { logger } from './utils/logger.js'
-import { ImageGenerationService, ImageDeliveryService, StrapiService } from "./service/index.js";
+import { ImageGenerationService, ImageDeliveryService, TextGenerationService, StrapiService } from "./service/index.js";
 import {
   setupCallbackHandlers, setupCommandHandlers,
   setupMessageHandlers, setupMiddlewareHandlers
@@ -19,14 +19,14 @@ async function main() {
     const strapiService = new StrapiService();
     const imageGenerationService = new ImageGenerationService(openAIClient);
     const imageDeliveryService = new ImageDeliveryService(strapiService);
-
+    const textGenerationService = new TextGenerationService(openAIClient)
     // Настраиваем обработчики
-    setupCallbackHandlers(bot, imageDeliveryService, imageGenerationService);
+    setupCallbackHandlers(bot, imageDeliveryService, imageGenerationService, textGenerationService, strapiService);
     setupCommandHandlers(bot, imageDeliveryService, imageGenerationService);
-    setupMessageHandlers(bot, imageDeliveryService, imageGenerationService);
+    setupMessageHandlers(bot, imageDeliveryService, imageGenerationService, textGenerationService, strapiService);
     setupMiddlewareHandlers(bot);
 
-    // Запускаем бота
+    // Запускаем ботаasdasd
     bot.start();
     logger.info(" 🤖 Бот запущен и слушает сообщения!");
 
